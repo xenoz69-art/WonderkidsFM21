@@ -1,10 +1,17 @@
 from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
-import json
 
 URL = "https://sortitoutsi.net/best-football-manager-2021-wonderkids"
 
-players = []
+requests_log = []
+
+
+def log_request(request):
+    requests_log.append({
+        "method": request.method,
+        "url": request.url,
+        "resource": request.resource_type
+    })
+
 
 with sync_playwright() as p:
     browser = p.chromium.launch(
@@ -17,43 +24,15 @@ with sync_playwright() as p:
 
     page = browser.new_page()
 
-    page.goto(URL, wait_until="domcontentloaded", timeout=120000)
+    page.on("request", log_request)
 
-page.wait_for_timeout(10000)
+    page.goto(URL, wait_until="domcontentloaded")
 
-html = page.content()
-
-with open("debug.html", "w", encoding="utf-8") as f:
-    f.write(html)
-
-page.screenshot(path="debug.png", full_page=True)
-    soup = BeautifulSoup(page.content(), "lxml")
-
-    table = soup.find("table")
-
-    rows = table.find_all("tr")[1:]
-
-    for row in rows:
-        cols = row.find_all("td")
-
-        if len(cols) < 9:
-            continue
-
-        players.append({
-            "name": cols[0].get_text(" ", strip=True),
-            "age": cols[1].get_text(strip=True),
-            "position": cols[2].get_text(" ", strip=True),
-            "wage": cols[3].get_text(strip=True),
-            "value": cols[4].get_text(strip=True),
-            "cost": cols[5].get_text(strip=True),
-            "expires": cols[6].get_text(strip=True),
-            "rating": cols[7].get_text(" ", strip=True),
-            "potential": cols[8].get_text(" ", strip=True)
-        })
+    page.wait_for_timeout(10000)
 
     browser.close()
 
-with open("players.json", "w", encoding="utf-8") as f:
-    json.dump(players, f, ensure_ascii=False, indent=2)
+print("===== REQUESTS =====")
 
-print(f"Total pemain: {len(players)}")
+for r in requests_log:
+    print(f'{r["resource"]}  {r["method"]}  {r["url"]}')
