@@ -17,12 +17,16 @@ with sync_playwright() as p:
 
     page = browser.new_page()
 
-    page.goto(URL, wait_until="domcontentloaded")
+    page.goto(URL, wait_until="domcontentloaded", timeout=120000)
 
-    page.wait_for_selector("table")
+page.wait_for_timeout(10000)
 
-    page.wait_for_timeout(5000)
+html = page.content()
 
+with open("debug.html", "w", encoding="utf-8") as f:
+    f.write(html)
+
+page.screenshot(path="debug.png", full_page=True)
     soup = BeautifulSoup(page.content(), "lxml")
 
     table = soup.find("table")
