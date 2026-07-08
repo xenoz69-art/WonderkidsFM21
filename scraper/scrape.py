@@ -1,38 +1,55 @@
 from playwright.sync_api import sync_playwright
+from bs4 import BeautifulSoup
+import json
 
 URL = "https://sortitoutsi.net/best-football-manager-2021-wonderkids"
+
+players = []
 
 with sync_playwright() as p:
     browser = p.chromium.launch(
         headless=True,
         args=[
             "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-blink-features=AutomationControlled"
+            "--disable-dev-shm-usage"
         ]
     )
 
-    context = browser.new_context(
-        user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
-        viewport={"width": 1366, "height": 768},
-        locale="en-US"
-    )
+    page = browser.new_page()
 
-    page = context.new_page()
+    page.goto(URL, wait_until="domcontentloaded")
 
-    page.goto(
-        URL,
-        wait_until="domcontentloaded",
-        timeout=60000
-    )
+    page.wait_for_selector("table")
 
-    page.wait_for_timeout(8000)
+    page.wait_for_timeout(5000)
 
-    page.screenshot(path="page.png", full_page=True)
+    soup = BeautifulSoup(page.content(), "lxml")
 
-    with open("page.html", "w", encoding="utf-8") as f:
-        f.write(page.content())
+    table = soup.find("table")
+
+    rows = table.find_all("tr")[1:]
+
+    for row in rows:
+        cols = row.find_all("td")
+
+        if len(cols) < 9:
+            continue
+
+        players.append({
+            "name": cols[0].get_text(" ", strip=True),
+            "age": cols[1].get_text(strip=True),
+            "position": cols[2].get_text(" ", strip=True),
+            "wage": cols[3].get_text(strip=True),
+            "value": cols[4].get_text(strip=True),
+            "cost": cols[5].get_text(strip=True),
+            "expires": cols[6].get_text(strip=True),
+            "rating": cols[7].get_text(" ", strip=True),
+            "potential": cols[8].get_text(" ", strip=True)
+        })
 
     browser.close()
 
-print("Selesai")
+with open("players.json", "w", encoding="utf-8") as f:
+    json.dump(players, f, ensure_ascii=False, indent=2)
+
+print(f"Total pemain: {len(players)}")
