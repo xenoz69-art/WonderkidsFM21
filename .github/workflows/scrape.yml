@@ -38,3 +38,11 @@ jobs:
           name: result
           path: |
             players.json
+            
+      - name: Upload Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: result
+          path: |
+            debug.html
+            debug.png
