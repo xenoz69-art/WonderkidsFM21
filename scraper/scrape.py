@@ -1,1 +1,3 @@
-print("Wonderkids FM21 Scraper")
+from playwright.sync_api import sync_playwright
+
+print("Playwright berhasil diinstall!")
