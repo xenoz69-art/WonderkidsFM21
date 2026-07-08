@@ -31,3 +31,11 @@ jobs:
       - name: Run scraper
         run: |
           python scraper/scrape.py
+
+      - name: Upload Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: result
+          path: |
+            page.html
+            page.png
