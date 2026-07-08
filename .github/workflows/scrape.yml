@@ -37,5 +37,4 @@ jobs:
         with:
           name: result
           path: |
-            page.html
-            page.png
+            players.json
